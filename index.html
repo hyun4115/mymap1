@@ -1,1953 +1,1070 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ENCORE · 서울과 고양의 공연 지도</title>
-
-  <style>
-    /* 기본 색상과 공통 설정 */
-    :root {
-      --ink: #272936;
-      --purple: #6956bf;
-      --paper: #f7f6f2;
-      --line: #e4e3e9;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      color: var(--ink);
-      font-family: Arial, "맑은 고딕", sans-serif;
-      background: var(--paper);
-    }
-
-    button,
-    input,
-    select {
-      font: inherit;
-    }
-
-    button {
-      cursor: pointer;
-    }
-
-    button:disabled {
-      opacity: 0.5;
-      cursor: wait;
-    }
-
-    button:focus-visible,
-    input:focus-visible,
-    select:focus-visible,
-    a:focus-visible {
-      outline: 3px solid #b6a1f5;
-      outline-offset: 3px;
-    }
-
-    /* 상단 헤더 */
-    header {
-      height: 74px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 30px;
-      background: #242632;
-      color: #f5f2eb;
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 11px;
-      font-size: 27px;
-      font-weight: 900;
-      letter-spacing: -1.5px;
-    }
-
-    .brand-mark {
-      display: grid;
-      place-items: center;
-      width: 38px;
-      height: 38px;
-      border-radius: 12px;
-      background: #d8ed9f;
-      color: #292c26;
-      font-family: Georgia, serif;
-      font-size: 31px;
-    }
-
-    .brand-sub {
-      margin-left: 12px;
-      font-size: 9px;
-      letter-spacing: 2px;
-      color: #aba9b7;
-    }
-
-    .tagline {
-      font-size: 11px;
-      color: #c2bfcb;
-      letter-spacing: 1px;
-    }
-
-    /* 왼쪽 목록과 오른쪽 지도 */
-    .layout {
-      display: flex;
-      height: calc(100vh - 74px);
-      height: calc(100dvh - 74px);
-    }
-
-    aside {
-      width: 410px;
-      flex-shrink: 0;
-      overflow-y: auto;
-      padding: 30px 26px;
-      background: var(--paper);
-    }
-
-    .eyebrow {
-      font-size: 10px;
-      font-weight: bold;
-      letter-spacing: 1.6px;
-      color: var(--purple);
-    }
-
-    h1 {
-      margin: 17px 0 14px;
-      font-size: 30px;
-      line-height: 1.45;
-      letter-spacing: -1.4px;
-    }
-
-    h1 em {
-      font-style: normal;
-      color: #6b58b3;
-    }
-
-    p {
-      line-height: 1.6;
-    }
-
-    .intro {
-      font-size: 12px;
-      line-height: 1.85;
-      color: #80778b;
-    }
-
-    /* 검색창 */
-    form {
-      display: flex;
-      gap: 8px;
-      margin: 21px 0 14px;
-    }
-
-    input {
-      width: 0;
-      flex: 1;
-      padding: 13px;
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      background: white;
-      font-size: 13px;
-      box-shadow: 0 3px 12px #29243803;
-    }
-
-    .primary {
-      padding: 12px 15px;
-      border: 0;
-      border-radius: 14px;
-      background: #292b38;
-      color: white;
-      font-size: 12px;
-    }
-
-    /* 자주 찾는 공연장 */
-    .chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 7px;
-    }
-
-    .chip {
-      padding: 8px 10px;
-      border: 1px solid var(--line);
-      border-radius: 20px;
-      background: transparent;
-      color: var(--ink);
-      font-size: 11px;
-    }
-
-    .chip:hover {
-      border-color: var(--purple);
-      background: #eeeafa;
-      color: var(--purple);
-    }
-
-    /* 지역 선택 */
-    .region-tabs {
-      display: flex;
-      gap: 4px;
-      margin: 22px 0 13px;
-      padding: 4px;
-      border-radius: 13px;
-      background: #eae8e5;
-    }
-
-    .region-tabs button {
-      flex: 1;
-      padding: 10px 4px;
-      border: 0;
-      border-radius: 10px;
-      background: transparent;
-      color: #787582;
-      font-size: 12px;
-    }
-
-    .region-tabs button[aria-pressed="true"] {
-      background: white;
-      color: #34323e;
-      font-weight: bold;
-      box-shadow: 0 2px 6px #2924380c;
-    }
-
-    /* 공연장 확장 탐색 */
-    .discovery {
-      padding: 14px;
-      border: 1px solid var(--line);
-      border-radius: 15px;
-      background: white;
-    }
-
-    .discovery-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 12px;
-      font-size: 12px;
-      font-weight: bold;
-    }
-
-    .count {
-      color: #6b58b3;
-      font-size: 11px;
-    }
-
-    .count b {
-      font-size: 18px;
-    }
-
-    .discovery-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 5px;
-    }
-
-    .discovery select {
-      flex: 1;
-      width: 0;
-      min-width: 110px;
-      padding: 9px 7px;
-      border: 1px solid var(--line);
-      border-radius: 9px;
-      background: #faf9fc;
-      color: var(--ink);
-      font-size: 11px;
-    }
-
-    .discovery button {
-      padding: 9px;
-      border: 0;
-      border-radius: 9px;
-      background: #e9e2fb;
-      color: #59469b;
-      font-size: 11px;
-    }
-
-    .discovery p {
-      margin: 9px 0 0;
-      color: #87818f;
-      font-size: 10px;
-      line-height: 1.6;
-    }
-
-    /* 선택한 공연장 */
-    .selected {
-      position: relative;
-      overflow: hidden;
-      margin-top: 22px;
-      padding: 20px;
-      border-radius: 18px;
-      background: #282b37;
-      color: white;
-    }
-
-    .selected::after {
-      content: "♫";
-      position: absolute;
-      right: 8px;
-      top: 0;
-      font-size: 90px;
-      color: #ffffff08;
-      pointer-events: none;
-    }
-
-    .selected small {
-      color: #d6e9ab;
-      font-size: 9px;
-      letter-spacing: 1px;
-    }
-
-    .selected h2 {
-      position: relative;
-      z-index: 1;
-      margin: 8px 0;
-      font-size: 17px;
-    }
-
-    .selected p {
-      margin: 0;
-      color: #b9b7c3;
-      font-size: 11px;
-    }
-
-    /* 주변 장소 필터 */
-    .filters {
-      display: flex;
-      gap: 3px;
-      margin: 18px 0;
-      padding: 4px;
-      border-radius: 14px;
-      background: #eeece8;
-    }
-
-    .filter {
-      flex: 1;
-      padding: 10px 4px;
-      border: 0;
-      border-radius: 10px;
-      background: transparent;
-      color: var(--ink);
-      font-size: 12px;
-    }
-
-    .filter[aria-pressed="true"] {
-      background: white;
-      color: #574c84;
-      box-shadow: 0 2px 7px #29243808;
-    }
-
-    #status {
-      min-height: 38px;
-      color: #776f82;
-      font-size: 12px;
-    }
-
-    /* 장소 목록 */
-    #results {
-      list-style: none;
-      margin: 0;
-      padding: 0;
-    }
-
-    .card {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      width: 100%;
-      margin: 8px 0;
-      padding: 15px 12px;
-      border: 1px solid #eae7ee;
-      border-radius: 15px;
-      background: white;
-      color: var(--ink);
-      text-align: left;
-      transition: transform 0.15s, box-shadow 0.15s;
-    }
-
-    .card:hover {
-      border-color: #cec5e9;
-      transform: translateY(-2px);
-      box-shadow: 0 6px 14px #29243808;
-    }
-
-    .card .text {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .card strong {
-      display: block;
-      font-size: 13px;
-      overflow-wrap: anywhere;
-    }
-
-    .card small {
-      display: block;
-      margin-top: 5px;
-      color: #8a8195;
-      font-size: 10px;
-      line-height: 1.6;
-      overflow-wrap: anywhere;
-    }
-
-    .distance {
-      padding: 5px 7px;
-      border-radius: 7px;
-      background: #f2effa;
-      color: var(--purple);
-      font-size: 10px;
-      white-space: nowrap;
-    }
-
-    /* 목록 아이콘 */
-    .symbol {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      width: 38px;
-      height: 38px;
-      border-radius: 12px;
-    }
-
-    .symbol.venue {
-      background: #eeebfb;
-      color: #6a55ad;
-    }
-
-    .symbol.cafe {
-      background: #f9eddc;
-      color: #b27a32;
-    }
-
-    .symbol.station {
-      background: #e1f0ec;
-      color: #348c7e;
-    }
-
-    .symbol svg {
-      width: 20px;
-      height: 20px;
-      stroke-width: 1.65;
-    }
-
-    /* 지도 영역 */
-    .map-area {
-      position: relative;
-      flex: 1;
-      min-width: 0;
-    }
-
-    #map {
-      width: 100%;
-      height: 100%;
-      background: #efedf3;
-    }
-
-    .map-tools {
-      position: absolute;
-      top: 18px;
-      right: 18px;
-      z-index: 5;
-      display: flex;
-      gap: 8px;
-    }
-
-    .map-tools button {
-      padding: 11px;
-      border: 1px solid var(--line);
-      border-radius: 11px;
-      background: white;
-      color: var(--ink);
-      box-shadow: 0 4px 15px #29243812;
-      font-size: 11px;
-    }
-
-    .legend {
-      position: absolute;
-      left: 18px;
-      bottom: 35px;
-      z-index: 5;
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      padding: 12px 16px;
-      border: 1px solid #e8e6ed;
-      border-radius: 12px;
-      background: white;
-      box-shadow: 0 5px 20px #24263212;
-      font-size: 11px;
-    }
-
-    .dot {
-      display: inline-block;
-      width: 8px;
-      height: 8px;
-      margin-right: 5px;
-      border-radius: 50%;
-    }
-
-    .dot.venue {
-      background: #7561b9;
-    }
-
-    .dot.cafe {
-      background: #b88545;
-    }
-
-    .dot.station {
-      background: #378a7d;
-    }
-
-    /* 지도 위 핀 */
-    .pin {
-      position: relative;
-      width: 40px;
-      height: 44px;
-      padding: 0;
-      border: 2px solid white;
-      border-radius: 16px;
-      box-shadow:
-        0 3px 0 #00000008,
-        0 6px 15px #24263225;
-    }
-
-    .pin::after {
-      content: "";
-      position: absolute;
-      bottom: -6px;
-      left: 14px;
-      width: 9px;
-      height: 9px;
-      border-right: 2px solid white;
-      border-bottom: 2px solid white;
-      background: inherit;
-      transform: rotate(45deg);
-    }
-
-    .pin svg {
-      position: relative;
-      z-index: 1;
-    }
-
-    .pin.venue {
-      background: #7561b9;
-      color: white;
-    }
-
-    .pin.cafe {
-      background: #b88545;
-      color: white;
-    }
-
-    .pin.station {
-      background: #378a7d;
-      color: white;
-    }
-
-    .pin:hover {
-      transform: translateY(-3px);
-    }
-
-    /* 상세 정보 */
-    .popup {
-      position: relative;
-      width: 235px;
-      padding: 16px;
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      background: white;
-      box-shadow: 0 6px 25px #29243825;
-      white-space: normal;
-    }
-
-    .popup strong {
-      display: block;
-      padding-right: 16px;
-      font-size: 14px;
-    }
-
-    .popup p {
-      margin: 9px 0;
-      color: #82798e;
-      font-size: 12px;
-    }
-
-    .popup a {
-      color: var(--purple);
-      font-size: 12px;
-    }
-
-    .close {
-      position: absolute;
-      right: 10px;
-      top: 8px;
-      border: 0;
-      background: none;
-      font-size: 20px;
-    }
-
-    .location-dot {
-      width: 18px;
-      height: 18px;
-      border: 3px solid white;
-      border-radius: 50%;
-      background: #4285f4;
-      box-shadow: 0 0 0 8px #4285f426;
-    }
-
-    /* 작은 화면 */
-    @media (max-width: 700px) {
-      header {
-        height: 64px;
-        padding: 0 16px;
-      }
-
-      .brand-sub,
-      .tagline {
-        display: none;
-      }
-
-      .layout {
-        height: calc(100vh - 64px);
-        height: calc(100dvh - 64px);
-      }
-
-      aside {
-        width: 46%;
-        padding: 17px 12px;
-      }
-
-      h1 {
-        font-size: 22px;
-        letter-spacing: -1px;
-      }
-
-      .intro br {
-        display: none;
-      }
-
-      form {
-        flex-wrap: wrap;
-      }
-
-      input {
-        width: 100%;
-        flex: auto;
-      }
-
-      .primary {
-        width: 100%;
-      }
-
-      .region-tabs button {
-        font-size: 10px;
-      }
-
-      .discovery {
-        padding: 10px;
-      }
-
-      .discovery-row select {
-        width: 100%;
-        min-width: 0;
-        flex: auto;
-      }
-
-      .selected {
-        padding: 14px;
-      }
-
-      .selected h2 {
-        font-size: 15px;
-      }
-
-      .filters {
-        flex-wrap: wrap;
-      }
-
-      .filter {
-        flex: auto;
-      }
-
-      .card {
-        flex-wrap: wrap;
-        gap: 8px;
-        padding: 12px 8px;
-      }
-
-      .symbol {
-        width: 30px;
-        height: 30px;
-      }
-
-      .pin {
-        width: 38px;
-        height: 42px;
-      }
-
-      .map-tools {
-        top: 10px;
-        right: 10px;
-        flex-direction: column;
-      }
-
-      .legend {
-        left: 8px;
-        right: 8px;
-        justify-content: center;
-        flex-wrap: wrap;
-        gap: 7px;
-        padding: 10px;
+<script>
+  // 외부 이미지 없이 SVG로 장소별 아이콘을 만든다.
+  const paths = {
+    venue: `
+      <rect x="9" y="2" width="6" height="12" rx="3"/>
+      <path d="M6 10v2a6 6 0 0 0 12 0v-2M12 18v4M8 22h8M10 5h4M10 8h4"/>
+    `,
+    cafe: `
+      <path d="M4 8h12v7a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V8Z"/>
+      <path d="M16 9h2a3 3 0 0 1 0 6h-2M3 22h16M7 2v3M12 2v3"/>
+    `,
+    station: `
+      <rect x="5" y="2" width="14" height="17" rx="4"/>
+      <path d="M8 6h8v5H8zM8 22l2-3m6 3-2-3"/>
+      <circle cx="9" cy="15" r=".7"/>
+      <circle cx="15" cy="15" r=".7"/>
+    `
+  };
+
+  function icon(type) {
+    return `
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        ${paths[type]}
+      </svg>
+    `;
+  }
+
+  // 검색 후보일 뿐이며, 아래 분류 검사를 통과한 장소만 표시한다.
+  const venueNames = [
+    "스페이스 브릭",
+    "무신사 개러지",
+    "롤링홀",
+    "프리즘홀",
+    "벨로주 홍대",
+    "벨로주 망원",
+    "KT&G 상상마당 라이브홀",
+    "클럽 FF",
+    "클럽 에반스",
+    "클럽 온에어",
+    "웨스트브릿지 라이브홀",
+    "CJ아지트 광흥창",
+    "구름아래소극장",
+    "폼텍웍스홀",
+    "홍대우주정거장",
+    "스트레인지프룻",
+    "살롱 문보우",
+    "얼라이브홀",
+    "예스24 라이브홀",
+    "KSPO DOME",
+    "올림픽공원 올림픽홀",
+    "올림픽공원 우리금융아트홀",
+    "올림픽공원 뮤즈라이브",
+    "블루스퀘어",
+    "노들섬 라이브하우스",
+    "현대카드 언더스테이지",
+    "세종문화회관",
+    "예술의전당 콘서트홀",
+    "예술의전당 IBK챔버홀",
+    "예술의전당 리사이틀홀",
+    "롯데콘서트홀",
+    "LG아트센터 서울",
+    "국립극장",
+    "국립정동극장",
+    "충무아트센터",
+    "두산아트센터",
+    "대학로예술극장",
+    "아르코예술극장",
+    "홍익대 대학로 아트센터",
+    "유니플렉스",
+    "대학로 드림아트센터",
+    "링크아트센터",
+    "대학로 TOM",
+    "예스24아트원",
+    "서강대학교 메리홀",
+    "연세대학교 백주년기념관",
+    "이화여자대학교 삼성홀",
+    "건국대학교 새천년관",
+    "광림아트센터",
+    "유니버설아트센터",
+    "한전아트센터",
+    "코엑스 오디토리움",
+    "마포아트센터",
+    "강동아트센터",
+    "구로아트밸리",
+    "노원문화예술회관",
+    "성북구민회관",
+    "성동 소월아트홀",
+    "영등포아트홀",
+    "금나래아트홀",
+    "관악아트홀",
+    "강북문화예술회관",
+    "양천문화회관",
+    "도봉구민회관",
+    "은평문화예술회관",
+    "고양아람누리",
+    "고양 아람극장",
+    "고양 아람음악당",
+    "고양 새라새극장",
+    "고양 노루목야외극장",
+    "고양어울림누리",
+    "고양 어울림극장",
+    "고양 별모래극장",
+    "고양 꽃메야외극장",
+    "고양시문예회관",
+    "일산 EBS 스페이스 공감"
+  ];
+
+  const districts = [
+    "서울 마포구",
+    "서울 종로구",
+    "서울 중구",
+    "서울 용산구",
+    "서울 성동구",
+    "서울 광진구",
+    "서울 동대문구",
+    "서울 중랑구",
+    "서울 성북구",
+    "서울 강북구",
+    "서울 도봉구",
+    "서울 노원구",
+    "서울 은평구",
+    "서울 서대문구",
+    "서울 양천구",
+    "서울 강서구",
+    "서울 구로구",
+    "서울 금천구",
+    "서울 영등포구",
+    "서울 동작구",
+    "서울 관악구",
+    "서울 서초구",
+    "서울 강남구",
+    "서울 송파구",
+    "서울 강동구",
+    "고양시 일산동구",
+    "고양시 일산서구",
+    "고양시 덕양구"
+  ];
+
+  const get = id => document.getElementById(id);
+
+  const inventory = new Map();
+
+  let map;
+  let circle;
+  let popup;
+  let userMarker;
+
+  let entries = [];
+  let knownVenues = [];
+
+  let region = "all";
+  let filter = "all";
+  let mode = "venues";
+  let inventoryView = true;
+
+  let generation = 0;
+  let locationRequest = 0;
+  let scanId = 0;
+
+  function message(text) {
+    get("status").textContent = text;
+  }
+
+  function coordinates(place) {
+    return new kakao.maps.LatLng(
+      Number(place.y),
+      Number(place.x)
+    );
+  }
+
+  // 서울 또는 고양인지 확인한다.
+  function supported(place) {
+    const address =
+      place.address_name || place.road_address_name || "";
+
+    return (
+      /^(서울|서울특별시)\s/.test(address) ||
+      /^(경기|경기도) 고양시\s/.test(address)
+    );
+  }
+
+  // 핵심 수정: 이름의 유사성이 아니라 실제 장소 분류로 판단한다.
+  function isVenue(place) {
+    if (!supported(place)) return false;
+
+    const name = place.place_name || "";
+    const category = place.category_name || "";
+
+    // 공연장과 같은 건물에 있어도 아래 시설은 제외한다.
+    const excluded =
+      /주차장|주차타워|충전소|충전기|스크린골프|골프장|골프연습장|헬스장|피트니스|수영장|체육관|운동장|경기장|테니스장|회의장|회의실|컨벤션|전시장|박람회장|매표소|출입구|입구|정문|후문|편의점|카페|커피|음식점|식당|레스토랑|매점|사무실|사무소|관리실|연습실|연습장|학원|교습소|주유소|화장실|영화관|박물관|미술관/;
+
+    if (excluded.test(name) || excluded.test(category)) {
+      return false;
+    }
+
+    // 분류의 마지막 단계만 확인한다.
+    // 예: 문화,예술 > 문화시설 > 공연장,연극극장
+    const leaf = category.split(">").pop().trim();
+
+    const allowed = new Set([
+      "공연장",
+      "연극극장",
+      "소극장",
+      "콘서트홀",
+      "라이브홀",
+      "음악공연장",
+      "뮤지컬극장",
+      "오페라극장",
+      "야외공연장"
+    ]);
+
+    return leaf
+      .split(",")
+      .some(part => allowed.has(part.trim()));
+  }
+
+  // 현재 선택한 지역 탭과 일치하는지 확인한다.
+  function inRegion(place) {
+    const address =
+      place.address_name || place.road_address_name || "";
+
+    if (region === "all") return true;
+    if (region === "seoul") return /^서울/.test(address);
+
+    return /고양시/.test(address);
+  }
+
+  // 검증한 공연장만 저장한다.
+  function remember(place) {
+    if (
+      isVenue(place) &&
+      place.id &&
+      Number.isFinite(Number(place.x)) &&
+      Number.isFinite(Number(place.y))
+    ) {
+      inventory.set(place.id, place);
+    }
+
+    knownVenues = [...inventory.values()];
+
+    get("venueCount").textContent =
+      knownVenues.filter(inRegion).length;
+  }
+
+  // 각 작업 목록에서 검색을 세 개씩 처리한다.
+  async function runPool(items, task, alive = () => true) {
+    let cursor = 0;
+
+    await Promise.all(
+      Array.from({ length: 3 }, async () => {
+        while (cursor < items.length && alive()) {
+          const item = items[cursor++];
+
+          try {
+            await task(item);
+          } catch (error) {
+            // 한 검색이 실패해도 다음 검색을 계속한다.
+          }
+        }
+      })
+    );
+  }
+
+  // 카카오 검색을 비동기 함수에서 사용할 수 있도록 만든다.
+  function query(method, value, options = {}) {
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        reject(new Error("검색 응답 지연"));
+      }, 12000);
+
+      const service = new kakao.maps.services.Places();
+
+      service[method](
+        value,
+        (data, status, pagination) => {
+          clearTimeout(timer);
+
+          if (status === kakao.maps.services.Status.OK) {
+            resolve({ data, pagination });
+          } else if (
+            status === kakao.maps.services.Status.ZERO_RESULT
+          ) {
+            resolve({
+              data: [],
+              pagination: null
+            });
+          } else {
+            reject(new Error("검색 실패"));
+          }
+        },
+        options
+      );
+    });
+  }
+
+  // 직접 검색과 지역 확장 탐색 모두 같은 공연장 검사를 적용한다.
+  async function keywordPages(keyword, alive = () => true) {
+    const found = new Map();
+
+    for (let page = 1; page <= 45 && alive(); page++) {
+      const result = await query("keywordSearch", keyword, {
+        size: 15,
+        page: page
+      });
+
+      result.data.forEach(place => {
+        if (isVenue(place)) {
+          found.set(place.id, place);
+        }
+      });
+
+      if (!result.pagination?.hasNextPage) {
+        break;
       }
     }
 
-    @media (prefers-reduced-motion: reduce) {
-      .card {
-        transition: none;
-      }
+    return [...found.values()];
+  }
 
-      .card:hover,
-      .pin:hover {
-        transform: none;
+  // 카페와 지하철역은 선택한 공연장 반경 500m로 검색한다.
+  async function nearby(code, center, token) {
+    const found = new Map();
+
+    for (let page = 1; page <= 45; page++) {
+      if (token !== generation) return [];
+
+      const result = await query("categorySearch", code, {
+        location: center,
+        radius: 500,
+        sort: kakao.maps.services.SortBy.DISTANCE,
+        size: 15,
+        page: page
+      });
+
+      result.data.forEach(place => {
+        const distance = Number(place.distance);
+
+        if (
+          place.distance !== "" &&
+          Number.isFinite(distance) &&
+          distance <= 500
+        ) {
+          found.set(place.id, place);
+        }
+      });
+
+      if (!result.pagination?.hasNextPage) {
+        break;
       }
     }
-  </style>
-</head>
 
-<body>
-  <header>
-    <div class="brand">
-      <span class="brand-mark">e.</span>
-      encore
-      <span class="brand-sub">THE LIVE MAP</span>
-    </div>
+    return [...found.values()];
+  }
 
-    <div class="tagline">
-      공연 전후, 가장 좋은 발견. &nbsp; SEOUL / GOYANG
-    </div>
-  </header>
+  // 기존 지도 표시와 목록을 정리한다.
+  function clearPlaces() {
+    entries.forEach(entry => {
+      entry.overlay.setMap(null);
+    });
 
-  <main class="layout">
-    <aside>
-      <div class="eyebrow">SEOUL & GOYANG · MUSIC GUIDE</div>
+    entries = [];
 
-      <h1>
-        좋은 공연은,<br>
-        <em>그날의 모든 순간.</em>
-      </h1>
+    if (popup) popup.setMap(null);
+    if (circle) circle.setMap(null);
 
-      <p class="intro">
-        서울부터 고양까지, 나만의 공연 동선.<br>
-        무대 · 커피 · 지하철을 한 지도에서.
-      </p>
+    get("results").replaceChildren();
+  }
 
-      <form id="searchForm">
-        <input
-          id="keyword"
-          aria-label="공연장 이름"
-          placeholder="공연장 이름 검색"
-          required
-        >
-        <button class="primary" id="searchButton" disabled>
-          검색
-        </button>
-      </form>
+  // 장소 상세 정보를 보여준다.
+  function showDetail(place) {
+    if (popup) popup.setMap(null);
 
-      <div class="chips" id="presets"></div>
+    const box = document.createElement("div");
+    box.className = "popup";
 
-      <div class="region-tabs">
-        <button data-region="all" aria-pressed="true">
-          서울 + 고양
-        </button>
-        <button data-region="seoul" aria-pressed="false">
-          서울
-        </button>
-        <button data-region="goyang" aria-pressed="false">
-          고양
-        </button>
-      </div>
+    const title = document.createElement("strong");
+    title.textContent = place.place_name;
 
-      <div class="discovery">
-        <div class="discovery-head">
-          <span>더 많은 무대 찾기</span>
-          <span class="count">
-            <b id="venueCount">0</b> 곳
-          </span>
-        </div>
+    const address = document.createElement("p");
+    address.textContent =
+      place.road_address_name || place.address_name;
 
-        <div class="discovery-row">
-          <select id="district" aria-label="탐색 지역">
-            <option value="all">선택 지역 전체</option>
-          </select>
+    const link = document.createElement("a");
+    link.textContent = "카카오맵에서 자세히 보기 ↗";
+    link.href =
+      "https://map.kakao.com/link/map/" +
+      encodeURIComponent(place.id);
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
 
-          <button id="discover" disabled>
-            확장 탐색 ↗
-          </button>
+    const close = document.createElement("button");
+    close.className = "close";
+    close.textContent = "×";
+    close.setAttribute("aria-label", "닫기");
 
-          <button id="stopScan" hidden>
-            중지
-          </button>
-        </div>
-
-        <p id="seedStatus">
-          기본 공연장 목록을 준비하고 있어요.
-        </p>
-
-        <p id="scanStatus">
-          서울 25개 구 · 고양 3개 구를 탐색할 수 있어요.
-        </p>
-      </div>
-
-      <section class="selected">
-        <small>SELECTED VENUE · 500m</small>
-
-        <h2 id="venueName">
-          어디로 떠나볼까요?
-        </h2>
-
-        <p id="venueAddress">
-          아래 공연장 목록에서 선택해 주세요.
-        </p>
-      </section>
-
-      <div class="filters" aria-label="주변 장소 필터">
-        <button class="filter" data-type="all" aria-pressed="true">
-          전체
-        </button>
-
-        <button class="filter" data-type="cafe" aria-pressed="false">
-          카페
-        </button>
-
-        <button class="filter" data-type="station" aria-pressed="false">
-          지하철역
-        </button>
-      </div>
-
-      <p id="status" role="status" aria-live="polite">
-        지도를 준비하고 있어요.
-      </p>
-
-      <ul id="results" aria-label="검색 결과"></ul>
-    </aside>
-
-    <section class="map-area" aria-label="공연장 주변 지도">
-      <div id="map"></div>
-
-      <div class="map-tools">
-        <button id="locate" disabled>◎ 내 위치</button>
-        <button id="reset" disabled>♫ 공연장 목록</button>
-      </div>
-
-      <div class="legend">
-        <span><i class="dot venue"></i>공연장</span>
-        <span><i class="dot cafe"></i>카페</span>
-        <span><i class="dot station"></i>지하철역</span>
-        <span>직선 500m</span>
-      </div>
-    </section>
-  </main>
-
-  <script>
-    // SVG로 마이크, 커피잔, 전철 아이콘을 그린다.
-    const paths = {
-      venue: `
-        <rect x="9" y="2" width="6" height="12" rx="3"/>
-        <path d="M6 10v2a6 6 0 0 0 12 0v-2M12 18v4M8 22h8M10 5h4M10 8h4"/>
-      `,
-      cafe: `
-        <path d="M4 8h12v7a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V8Z"/>
-        <path d="M16 9h2a3 3 0 0 1 0 6h-2M3 22h16M7 2v3M12 2v3"/>
-      `,
-      station: `
-        <rect x="5" y="2" width="14" height="17" rx="4"/>
-        <path d="M8 6h8v5H8zM8 22l2-3m6 3-2-3"/>
-        <circle cx="9" cy="15" r=".7"/>
-        <circle cx="15" cy="15" r=".7"/>
-      `
+    close.onclick = () => {
+      if (popup) popup.setMap(null);
     };
 
-    function icon(type) {
-      return `
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.8"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          aria-hidden="true"
-        >
-          ${paths[type]}
-        </svg>
-      `;
+    box.append(close, title, address, link);
+
+    popup = new kakao.maps.CustomOverlay({
+      map: map,
+      position: coordinates(place),
+      content: box,
+      yAnchor: 1.5,
+      zIndex: 100
+    });
+
+    map.panTo(coordinates(place));
+  }
+
+  // 지도에 추가하는 단계에서도 공연장 여부를 검사한다.
+  function addPlace(place, type) {
+    if (type === "venue" && !isVenue(place)) return;
+
+    const pin = document.createElement("button");
+
+    pin.className = "pin symbol " + type;
+    pin.innerHTML = icon(type);
+    pin.title = place.place_name;
+    pin.setAttribute("aria-label", place.place_name);
+
+    const activate = () => {
+      if (type === "venue") {
+        selectVenue(place);
+      } else {
+        showDetail(place);
+      }
+    };
+
+    pin.onclick = activate;
+
+    const overlay = new kakao.maps.CustomOverlay({
+      map: map,
+      position: coordinates(place),
+      content: pin,
+      yAnchor: 1,
+      zIndex: type === "venue" ? 20 : 5
+    });
+
+    entries.push({
+      place: place,
+      type: type,
+      overlay: overlay,
+      activate: activate
+    });
+  }
+
+  // 목록과 지도 아이콘을 필터에 맞게 표시한다.
+  function renderList() {
+    get("results").replaceChildren();
+
+    entries.forEach(entry => {
+      const visible =
+        mode === "venues" ||
+        entry.type === "venue" ||
+        filter === "all" ||
+        filter === entry.type;
+
+      entry.overlay.setMap(visible ? map : null);
+
+      if (
+        !visible ||
+        (mode === "nearby" && entry.type === "venue")
+      ) {
+        return;
+      }
+
+      const item = document.createElement("li");
+
+      const button = document.createElement("button");
+      button.className = "card";
+
+      const symbol = document.createElement("span");
+      symbol.className = "symbol " + entry.type;
+      symbol.innerHTML = icon(entry.type);
+
+      const text = document.createElement("span");
+      text.className = "text";
+
+      const name = document.createElement("strong");
+      name.textContent = entry.place.place_name;
+
+      const address = document.createElement("small");
+      address.textContent =
+        entry.place.road_address_name ||
+        entry.place.address_name;
+
+      text.append(name, address);
+      button.append(symbol, text);
+
+      if (entry.type !== "venue") {
+        const distance = document.createElement("span");
+        distance.className = "distance";
+        distance.textContent = entry.place.distance + "m";
+
+        button.append(distance);
+      }
+
+      button.onclick = entry.activate;
+
+      item.append(button);
+      get("results").append(item);
+    });
+  }
+
+  // 선택한 공연장 주변을 검색한다.
+  async function selectVenue(place) {
+    if (!isVenue(place)) {
+      message(
+        "공연장 분류가 확인되지 않아 제외한 장소예요."
+      );
+      return;
     }
 
-    // 검색용 후보 목록이다.
-    // 실제 좌표와 장소 정보는 카카오 검색 결과에서 가져온다.
-    const venueNames = [
+    const token = ++generation;
+
+    mode = "nearby";
+    inventoryView = false;
+
+    clearPlaces();
+
+    get("venueName").textContent = place.place_name;
+    get("venueAddress").textContent =
+      place.road_address_name || place.address_name;
+
+    const center = coordinates(place);
+
+    map.setLevel(5);
+    map.setCenter(center);
+
+    circle = new kakao.maps.Circle({
+      map: map,
+      center: center,
+      radius: 500,
+      strokeWeight: 2,
+      strokeColor: "#7652df",
+      strokeOpacity: 0.65,
+      strokeStyle: "dash",
+      fillColor: "#a98af5",
+      fillOpacity: 0.12
+    });
+
+    addPlace(place, "venue");
+
+    message(
+      "공연장 반경 500m의 카페와 지하철역을 찾고 있어요."
+    );
+
+    const results = await Promise.allSettled([
+      nearby("CE7", center, token),
+      nearby("SW8", center, token)
+    ]);
+
+    if (token !== generation) return;
+
+    const types = ["cafe", "station"];
+    const labels = ["카페", "지하철역"];
+    const notes = [];
+
+    results.forEach((result, index) => {
+      if (result.status === "fulfilled") {
+        result.value.forEach(item => {
+          addPlace(item, types[index]);
+        });
+
+        notes.push(
+          labels[index] + " " + result.value.length + "곳"
+        );
+      } else {
+        notes.push(
+          labels[index] +
+          " 검색 실패 · 공연장을 다시 눌러 재시도"
+        );
+      }
+    });
+
+    entries.sort((first, second) => {
+      return (
+        Number(first.place.distance || 0) -
+        Number(second.place.distance || 0)
+      );
+    });
+
+    renderList();
+
+    message(
+      notes.join(" / ") +
+      " · 카카오 검색 결과 기준입니다. " +
+      "500m는 직선거리이며 역 출입구·도보거리와 다를 수 있어요."
+    );
+  }
+
+  // 입력한 검색어에서도 공연장만 남긴다.
+  async function searchVenues(keyword) {
+    const token = ++generation;
+
+    clearPlaces();
+
+    mode = "venues";
+    inventoryView = false;
+
+    get("venueName").textContent =
+      "검색 결과에서 공연장 선택";
+
+    get("venueAddress").textContent =
+      "공연장 분류가 확인된 장소만 표시합니다.";
+
+    message("공연장을 검색하고 있어요.");
+
+    try {
+      const data = await keywordPages(
+        keyword,
+        () => token === generation
+      );
+
+      if (token !== generation) return;
+
+      const places = data.filter(inRegion);
+
+      places.forEach(place => {
+        addPlace(place, "venue");
+      });
+
+      renderList();
+
+      if (places.length) {
+        map.setLevel(5);
+        map.setCenter(coordinates(places[0]));
+
+        message(
+          "공연장으로 분류된 장소 " +
+          places.length +
+          "곳을 찾았어요. 원하는 공연장을 선택해 주세요."
+        );
+      } else {
+        message(
+          "공연장 분류가 확인된 결과가 없어요. " +
+          "검색어 또는 지역 탭을 바꿔 보세요."
+        );
+      }
+    } catch (error) {
+      if (token === generation) {
+        message(
+          "공연장 검색에 실패했어요. 다시 시도해 주세요."
+        );
+      }
+    }
+  }
+
+  // 기본 목록 갱신 시 지도 중심은 바꾸지 않는다.
+  function refreshInventory() {
+    if (!inventoryView || mode !== "venues") return;
+
+    clearPlaces();
+
+    knownVenues
+      .filter(inRegion)
+      .sort((first, second) => {
+        return first.place_name.localeCompare(
+          second.place_name,
+          "ko"
+        );
+      })
+      .forEach(place => {
+        addPlace(place, "venue");
+      });
+
+    renderList();
+
+    get("venueCount").textContent = entries.length;
+  }
+
+  // 공연장 목록으로 돌아간다.
+  function showVenues() {
+    ++generation;
+
+    mode = "venues";
+    inventoryView = true;
+
+    get("venueName").textContent =
+      "당신의 다음 무대를 찾아보세요";
+
+    get("venueAddress").textContent =
+      "카카오 장소 분류에서 확인된 공연장만 표시합니다.";
+
+    refreshInventory();
+
+    map.setLevel(5);
+
+    const center = region === "goyang"
+      ? new kakao.maps.LatLng(37.6586, 126.7733)
+      : new kakao.maps.LatLng(37.5509, 126.9217);
+
+    map.setCenter(center);
+
+    message(
+      "공연장을 선택하면 주변 500m의 카페와 지하철역을 보여드려요."
+    );
+  }
+
+  // 지역별 검색으로 공연장을 추가한다.
+  async function discover() {
+    const id = ++scanId;
+    const selected = get("district").value;
+
+    const areas = selected === "all"
+      ? districts.filter(area => {
+          if (region === "all") return true;
+
+          return region === "goyang"
+            ? area.startsWith("고양")
+            : area.startsWith("서울");
+        })
+      : [selected];
+
+    const jobs = areas.flatMap(area => {
+      return [
+        "공연장",
+        "라이브홀",
+        "콘서트홀",
+        "소극장"
+      ].map(term => area + " " + term);
+    });
+
+    let done = 0;
+    let failures = 0;
+
+    get("discover").disabled = true;
+    get("stopScan").hidden = false;
+
+    get("scanStatus").textContent =
+      "공연장으로 분류된 장소를 탐색하고 있어요.";
+
+    await runPool(
+      jobs,
+      async keyword => {
+        try {
+          const places = await keywordPages(
+            keyword,
+            () => id === scanId
+          );
+
+          if (id !== scanId) return;
+
+          places.forEach(remember);
+        } catch (error) {
+          failures++;
+        }
+
+        if (id !== scanId) return;
+
+        done++;
+        refreshInventory();
+
+        get("scanStatus").textContent =
+          "지역 탐색 " + done + "/" + jobs.length +
+          " · 누적 " + inventory.size + "곳";
+      },
+      () => id === scanId
+    );
+
+    if (id !== scanId) return;
+
+    get("discover").disabled = false;
+    get("stopScan").hidden = true;
+
+    get("scanStatus").textContent =
+      "탐색 완료 · 공연장 " + inventory.size + "곳" +
+      (
+        failures
+          ? " · 검색 실패 " + failures + "건, 재시도 가능"
+          : ""
+      ) +
+      " · 카카오 검색 제공 범위 기준";
+  }
+
+  // 현재 위치를 표시한다.
+  function locateUser() {
+    if (!navigator.geolocation) {
+      message(
+        "이 브라우저는 위치 확인을 지원하지 않아요."
+      );
+      return;
+    }
+
+    const token = generation;
+    const request = ++locationRequest;
+
+    message(
+      "위치 권한을 허용하면 현재 위치를 표시해요."
+    );
+
+    navigator.geolocation.getCurrentPosition(
+      position => {
+        if (request !== locationRequest) return;
+
+        const center = new kakao.maps.LatLng(
+          position.coords.latitude,
+          position.coords.longitude
+        );
+
+        if (userMarker) userMarker.setMap(null);
+
+        const dot = document.createElement("div");
+
+        dot.className = "location-dot";
+        dot.title = "현재 위치";
+
+        userMarker = new kakao.maps.CustomOverlay({
+          map: map,
+          position: center,
+          content: dot,
+          zIndex: 30
+        });
+
+        if (token === generation) {
+          map.setLevel(5);
+          map.setCenter(center);
+
+          message(
+            "현재 위치를 표시했어요. 공연장을 선택해 보세요."
+          );
+        }
+      },
+      () => {
+        if (token === generation) {
+          message(
+            "현재 위치를 확인하지 못했어요. " +
+            "공연장 검색은 그대로 이용할 수 있어요."
+          );
+        }
+      },
+      {
+        timeout: 10000,
+        maximumAge: 0,
+        enableHighAccuracy: true
+      }
+    );
+  }
+
+  // 지도와 화면을 준비한다.
+  async function initialize() {
+    map = new kakao.maps.Map(get("map"), {
+      center: new kakao.maps.LatLng(37.5509, 126.9217),
+      level: 5
+    });
+
+    [
+      "searchButton",
+      "locate",
+      "reset",
+      "discover"
+    ].forEach(id => {
+      get(id).disabled = false;
+    });
+
+    const shortcuts = [
       "스페이스 브릭",
       "무신사 개러지",
       "롤링홀",
       "프리즘홀",
-      "벨로주 홍대",
-      "벨로주 망원",
-      "KT&G 상상마당 라이브홀",
-      "클럽 FF",
-      "클럽 에반스",
-      "클럽 온에어",
-      "웨스트브릿지 라이브홀",
-      "CJ아지트 광흥창",
-      "구름아래소극장",
-      "폼텍웍스홀",
-      "홍대우주정거장",
-      "스트레인지프룻",
-      "살롱 문보우",
-      "얼라이브홀",
-      "예스24 라이브홀",
-      "KSPO DOME",
-      "올림픽공원 올림픽홀",
-      "올림픽공원 우리금융아트홀",
-      "올림픽공원 뮤즈라이브",
-      "핸드볼경기장",
-      "잠실실내체육관",
-      "잠실종합운동장",
-      "고척스카이돔",
-      "서울월드컵경기장",
-      "블루스퀘어",
-      "노들섬 라이브하우스",
-      "현대카드 언더스테이지",
-      "세종문화회관",
-      "예술의전당 콘서트홀",
-      "예술의전당 IBK챔버홀",
-      "예술의전당 리사이틀홀",
-      "롯데콘서트홀",
-      "LG아트센터 서울",
-      "국립극장",
-      "국립정동극장",
-      "충무아트센터",
-      "두산아트센터",
-      "대학로예술극장",
-      "아르코예술극장",
-      "홍익대 대학로 아트센터",
-      "유니플렉스",
-      "대학로 드림아트센터",
-      "링크아트센터",
-      "대학로 TOM",
-      "예스24아트원",
-      "서강대학교 메리홀",
-      "연세대학교 백주년기념관",
-      "이화여자대학교 삼성홀",
-      "건국대학교 새천년관",
-      "광림아트센터",
-      "유니버설아트센터",
-      "한전아트센터",
-      "코엑스 오디토리움",
-      "마포아트센터",
-      "강동아트센터",
-      "구로아트밸리",
-      "노원문화예술회관",
-      "성북구민회관",
-      "성동 소월아트홀",
-      "영등포아트홀",
-      "금나래아트홀",
-      "관악아트홀",
-      "강북문화예술회관",
-      "양천문화회관",
-      "도봉구민회관",
-      "은평문화예술회관",
       "고양아람누리",
-      "고양 아람극장",
-      "고양 아람음악당",
-      "고양 새라새극장",
-      "고양 노루목야외극장",
-      "고양어울림누리",
-      "고양 어울림극장",
-      "고양 별모래극장",
-      "고양 꽃메야외극장",
-      "고양종합운동장",
-      "고양체육관",
-      "킨텍스",
-      "고양시문예회관",
-      "고양관광정보센터",
-      "일산 EBS 스페이스 공감"
+      "고양어울림누리"
     ];
 
-    // 서울 25개 구와 고양 3개 구
-    const districts = [
-      "서울 마포구",
-      "서울 종로구",
-      "서울 중구",
-      "서울 용산구",
-      "서울 성동구",
-      "서울 광진구",
-      "서울 동대문구",
-      "서울 중랑구",
-      "서울 성북구",
-      "서울 강북구",
-      "서울 도봉구",
-      "서울 노원구",
-      "서울 은평구",
-      "서울 서대문구",
-      "서울 양천구",
-      "서울 강서구",
-      "서울 구로구",
-      "서울 금천구",
-      "서울 영등포구",
-      "서울 동작구",
-      "서울 관악구",
-      "서울 서초구",
-      "서울 강남구",
-      "서울 송파구",
-      "서울 강동구",
-      "고양시 일산동구",
-      "고양시 일산서구",
-      "고양시 덕양구"
-    ];
+    // 바로가기도 검색 결과를 보여주어 정확한 공연장을 고르게 한다.
+    shortcuts.forEach(name => {
+      const button = document.createElement("button");
 
-    const get = id => document.getElementById(id);
+      button.className = "chip";
+      button.textContent = name;
 
-    // 장소 ID를 기준으로 중복 공연장을 제거한다.
-    const inventory = new Map();
+      button.onclick = () => {
+        get("keyword").value = name;
+        searchVenues(name);
+      };
 
-    let map;
-    let circle;
-    let popup;
-    let userMarker;
+      get("presets").append(button);
+    });
 
-    let entries = [];
-    let knownVenues = [];
+    get("searchForm").onsubmit = event => {
+      event.preventDefault();
 
-    let region = "all";
-    let filter = "all";
-    let mode = "venues";
-    let inventoryView = true;
+      const keyword = get("keyword").value.trim();
 
-    // 요청 번호를 사용해 오래된 응답이 화면을 덮어쓰지 않게 한다.
-    let generation = 0;
-    let locationRequest = 0;
-    let scanId = 0;
+      if (keyword) searchVenues(keyword);
+    };
 
-    function normalize(value) {
-      return value
-        .replace(/[^a-zA-Z0-9가-힣]/g, "")
-        .toLowerCase();
-    }
+    get("locate").onclick = locateUser;
+    get("reset").onclick = showVenues;
 
-    function coordinates(place) {
-      return new kakao.maps.LatLng(
-        Number(place.y),
-        Number(place.x)
-      );
-    }
+    document.querySelectorAll("[data-type]").forEach(button => {
+      button.onclick = () => {
+        filter = button.dataset.type;
 
-    function message(text) {
-      get("status").textContent = text;
-    }
-
-    // 서울 또는 고양에 있는 장소인지 확인한다.
-    function supported(place) {
-      const address =
-        place.address_name || place.road_address_name || "";
-
-      return (
-        /^(서울|서울특별시)\s/.test(address) ||
-        /^(경기|경기도) 고양시\s/.test(address)
-      );
-    }
-
-    // 확장 탐색에서는 공연 관련 장소를 골라낸다.
-    function isVenue(place) {
-      const category = place.category_name || "";
-
-      return (
-        /공연장|극장|소극장|콘서트홀|라이브홀|아트홀/.test(category) &&
-        !/영화관/.test(category)
-      );
-    }
-
-    // 선택한 지역 탭과 일치하는지 확인한다.
-    function inRegion(place) {
-      const address =
-        place.address_name || place.road_address_name || "";
-
-      if (region === "all") return true;
-      if (region === "seoul") return /^서울/.test(address);
-
-      return /고양시/.test(address);
-    }
-
-    // 검색한 공연장을 목록에 기억한다.
-    function remember(place) {
-      if (
-        supported(place) &&
-        place.id &&
-        Number.isFinite(Number(place.x)) &&
-        Number.isFinite(Number(place.y))
-      ) {
-        inventory.set(place.id, place);
-      }
-
-      knownVenues = [...inventory.values()];
-
-      get("venueCount").textContent =
-        knownVenues.filter(inRegion).length;
-    }
-
-    // 각 작업 목록에서 검색을 세 개씩 동시에 처리한다.
-    async function runPool(items, task, alive = () => true) {
-      let cursor = 0;
-
-      await Promise.all(
-        Array.from({ length: 3 }, async () => {
-          while (cursor < items.length && alive()) {
-            const item = items[cursor++];
-
-            try {
-              await task(item);
-            } catch (error) {
-              // 개별 실패가 나머지 검색을 막지 않게 한다.
-            }
-          }
-        })
-      );
-    }
-
-    // 카카오 검색을 Promise 형태로 사용한다.
-    function query(method, value, options = {}) {
-      return new Promise((resolve, reject) => {
-        const timer = setTimeout(() => {
-          reject(new Error("검색 응답 지연"));
-        }, 12000);
-
-        const service = new kakao.maps.services.Places();
-
-        service[method](
-          value,
-          (data, status, pagination) => {
-            clearTimeout(timer);
-
-            if (status === kakao.maps.services.Status.OK) {
-              resolve({ data, pagination });
-            } else if (
-              status === kakao.maps.services.Status.ZERO_RESULT
-            ) {
-              resolve({
-                data: [],
-                pagination: null
-              });
-            } else {
-              reject(new Error("검색 실패"));
-            }
-          },
-          options
-        );
-      });
-    }
-
-    // 키워드 검색의 다음 페이지까지 확인한다.
-    async function keywordPages(keyword, alive = () => true) {
-      const found = new Map();
-
-      for (let page = 1; page <= 45 && alive(); page++) {
-        const result = await query("keywordSearch", keyword, {
-          size: 15,
-          page: page
+        document.querySelectorAll("[data-type]").forEach(item => {
+          item.setAttribute(
+            "aria-pressed",
+            String(item === button)
+          );
         });
 
-        result.data.forEach(place => {
-          if (supported(place)) {
-            found.set(place.id, place);
-          }
-        });
-
-        if (!result.pagination?.hasNextPage) {
-          break;
-        }
-      }
-
-      return [...found.values()];
-    }
-
-    // 공연장 반경 500m의 카페 또는 지하철역을 검색한다.
-    async function nearby(code, center, token) {
-      const found = new Map();
-
-      for (let page = 1; page <= 45; page++) {
-        if (token !== generation) return [];
-
-        const result = await query("categorySearch", code, {
-          location: center,
-          radius: 500,
-          sort: kakao.maps.services.SortBy.DISTANCE,
-          size: 15,
-          page: page
-        });
-
-        result.data.forEach(place => {
-          // API가 돌려주는 거리의 단위는 미터다.
-          const distance = Number(place.distance);
-
-          if (
-            place.distance !== "" &&
-            Number.isFinite(distance) &&
-            distance <= 500
-          ) {
-            found.set(place.id, place);
-          }
-        });
-
-        if (!result.pagination?.hasNextPage) {
-          break;
-        }
-      }
-
-      return [...found.values()];
-    }
-
-    // 표시 중인 장소와 반경 원을 지운다.
-    function clearPlaces() {
-      entries.forEach(entry => {
-        entry.overlay.setMap(null);
-      });
-
-      entries = [];
-
-      if (popup) popup.setMap(null);
-      if (circle) circle.setMap(null);
-
-      get("results").replaceChildren();
-    }
-
-    // 장소 상세 팝업을 표시한다.
-    function showDetail(place) {
-      if (popup) popup.setMap(null);
-
-      const box = document.createElement("div");
-      box.className = "popup";
-
-      const title = document.createElement("strong");
-      title.textContent = place.place_name;
-
-      const address = document.createElement("p");
-      address.textContent =
-        place.road_address_name || place.address_name;
-
-      const link = document.createElement("a");
-      link.textContent = "카카오맵에서 자세히 보기 ↗";
-      link.href =
-        "https://map.kakao.com/link/map/" +
-        encodeURIComponent(place.id);
-      link.target = "_blank";
-      link.rel = "noopener noreferrer";
-
-      const close = document.createElement("button");
-      close.className = "close";
-      close.textContent = "×";
-      close.setAttribute("aria-label", "닫기");
-
-      close.onclick = () => {
         if (popup) popup.setMap(null);
-      };
-
-      box.append(close, title, address, link);
-
-      popup = new kakao.maps.CustomOverlay({
-        map: map,
-        position: coordinates(place),
-        content: box,
-        yAnchor: 1.5,
-        zIndex: 100
-      });
-
-      map.panTo(coordinates(place));
-    }
-
-    // 지도 위에 장소별 핀을 추가한다.
-    function addPlace(place, type) {
-      const pin = document.createElement("button");
-
-      pin.className = "pin symbol " + type;
-      pin.innerHTML = icon(type);
-      pin.title = place.place_name;
-      pin.setAttribute("aria-label", place.place_name);
-
-      const activate = () => {
-        if (type === "venue") {
-          selectVenue(place);
-        } else {
-          showDetail(place);
-        }
-      };
-
-      pin.onclick = activate;
-
-      const overlay = new kakao.maps.CustomOverlay({
-        map: map,
-        position: coordinates(place),
-        content: pin,
-        yAnchor: 1,
-        zIndex: type === "venue" ? 20 : 5
-      });
-
-      entries.push({
-        place: place,
-        type: type,
-        overlay: overlay,
-        activate: activate
-      });
-    }
-
-    // 필터에 맞춰 목록과 핀을 표시한다.
-    function renderList() {
-      get("results").replaceChildren();
-
-      entries.forEach(entry => {
-        const visible =
-          mode === "venues" ||
-          entry.type === "venue" ||
-          filter === "all" ||
-          filter === entry.type;
-
-        entry.overlay.setMap(visible ? map : null);
-
-        if (
-          !visible ||
-          (mode === "nearby" && entry.type === "venue")
-        ) {
-          return;
-        }
-
-        const item = document.createElement("li");
-
-        const button = document.createElement("button");
-        button.className = "card";
-
-        const symbol = document.createElement("span");
-        symbol.className = "symbol " + entry.type;
-        symbol.innerHTML = icon(entry.type);
-
-        const text = document.createElement("span");
-        text.className = "text";
-
-        const name = document.createElement("strong");
-        name.textContent = entry.place.place_name;
-
-        const address = document.createElement("small");
-        address.textContent =
-          entry.place.road_address_name ||
-          entry.place.address_name;
-
-        text.append(name, address);
-        button.append(symbol, text);
-
-        if (entry.type !== "venue") {
-          const distance = document.createElement("span");
-
-          distance.className = "distance";
-          distance.textContent = entry.place.distance + "m";
-
-          button.append(distance);
-        }
-
-        button.onclick = entry.activate;
-
-        item.append(button);
-        get("results").append(item);
-      });
-    }
-
-    // 공연장을 선택하면 주변 500m를 검색한다.
-    async function selectVenue(place) {
-      const token = ++generation;
-
-      mode = "nearby";
-      inventoryView = false;
-
-      clearPlaces();
-
-      get("venueName").textContent = place.place_name;
-      get("venueAddress").textContent =
-        place.road_address_name || place.address_name;
-
-      const center = coordinates(place);
-
-      map.setLevel(5);
-      map.setCenter(center);
-
-      circle = new kakao.maps.Circle({
-        map: map,
-        center: center,
-        radius: 500,
-        strokeWeight: 2,
-        strokeColor: "#7652df",
-        strokeOpacity: 0.65,
-        strokeStyle: "dash",
-        fillColor: "#a98af5",
-        fillOpacity: 0.12
-      });
-
-      addPlace(place, "venue");
-
-      message(
-        "공연장 반경 500m의 카페와 지하철역을 찾고 있어요."
-      );
-
-      const results = await Promise.allSettled([
-        nearby("CE7", center, token),
-        nearby("SW8", center, token)
-      ]);
-
-      if (token !== generation) return;
-
-      const types = ["cafe", "station"];
-      const labels = ["카페", "지하철역"];
-      const notes = [];
-
-      results.forEach((result, index) => {
-        if (result.status === "fulfilled") {
-          result.value.forEach(item => {
-            addPlace(item, types[index]);
-          });
-
-          notes.push(
-            labels[index] + " " + result.value.length + "곳"
-          );
-        } else {
-          notes.push(
-            labels[index] +
-            " 검색 실패 · 공연장을 다시 눌러 재시도"
-          );
-        }
-      });
-
-      entries.sort((first, second) => {
-        return (
-          Number(first.place.distance || 0) -
-          Number(second.place.distance || 0)
-        );
-      });
-
-      renderList();
-
-      message(
-        notes.join(" / ") +
-        " · 카카오에서 검색 가능한 결과 기준입니다. " +
-        "역 출입구·도보거리와는 다를 수 있어요."
-      );
-    }
-
-    // 직접 입력한 공연장 이름을 검색한다.
-    async function searchVenues(keyword) {
-      const token = ++generation;
-
-      clearPlaces();
-
-      mode = "venues";
-      inventoryView = false;
-
-      get("venueName").textContent =
-        "검색 결과에서 공연장 선택";
-
-      get("venueAddress").textContent =
-        "공연장을 선택하면 주변 500m를 검색합니다.";
-
-      message("공연장을 검색하고 있어요.");
-
-      try {
-        const data = await keywordPages(
-          keyword,
-          () => token === generation
-        );
-
-        if (token !== generation) return;
-
-        const places = data.filter(inRegion);
-
-        places.forEach(place => {
-          addPlace(place, "venue");
-        });
 
         renderList();
+      };
+    });
 
-        if (places.length) {
-          map.setLevel(5);
-          map.setCenter(coordinates(places[0]));
+    const observer = new ResizeObserver(() => {
+      const center = map.getCenter();
 
-          message(
-            "이름과 주소를 확인한 뒤 공연장을 선택해 주세요. " +
-            "서울·고양 검색 결과입니다."
+      map.relayout();
+      map.setCenter(center);
+    });
+
+    observer.observe(get("map"));
+
+    districts.forEach(area => {
+      const option = document.createElement("option");
+
+      option.value = area;
+      option.textContent = area;
+
+      get("district").append(option);
+    });
+
+    document.querySelectorAll("[data-region]").forEach(button => {
+      button.onclick = () => {
+        region = button.dataset.region;
+
+        document.querySelectorAll("[data-region]").forEach(item => {
+          item.setAttribute(
+            "aria-pressed",
+            String(item === button)
           );
-        } else {
-          message(
-            "검색 결과가 없어요. 검색어 또는 지역 탭을 확인해 주세요."
-          );
-        }
-      } catch (error) {
-        if (token === generation) {
-          message(
-            "공연장 검색에 실패했어요. 다시 시도해 주세요."
-          );
-        }
-      }
-    }
-
-    // 기본 목록을 갱신할 때는 지도 중심을 유지한다.
-    function refreshInventory() {
-      if (!inventoryView || mode !== "venues") return;
-
-      clearPlaces();
-
-      knownVenues
-        .filter(inRegion)
-        .sort((first, second) => {
-          return first.place_name.localeCompare(
-            second.place_name,
-            "ko"
-          );
-        })
-        .forEach(place => {
-          addPlace(place, "venue");
         });
 
-      renderList();
+        get("district").value = "all";
 
-      get("venueCount").textContent = entries.length;
-    }
-
-    // 공연장 전체 목록으로 돌아간다.
-    function showVenues() {
-      ++generation;
-
-      mode = "venues";
-      inventoryView = true;
-
-      get("venueName").textContent =
-        "당신의 다음 무대를 찾아보세요";
-
-      get("venueAddress").textContent =
-        "공연장 · 라이브홀 · 소극장 · 공연 개최 시설";
-
-      refreshInventory();
-
-      map.setLevel(5);
-
-      const center = region === "goyang"
-        ? new kakao.maps.LatLng(37.6586, 126.7733)
-        : new kakao.maps.LatLng(37.5509, 126.9217);
-
-      map.setCenter(center);
-
-      message(
-        "목록에서 공연장을 고르면 카페와 지하철역을 " +
-        "500m 기준으로 검색해요."
-      );
-    }
-
-    // 구별 키워드 검색으로 공연장 목록을 확장한다.
-    async function discover() {
-      const id = ++scanId;
-      const selected = get("district").value;
-
-      const areas = selected === "all"
-        ? districts.filter(area => {
-            if (region === "all") return true;
-
-            return region === "goyang"
-              ? area.startsWith("고양")
-              : area.startsWith("서울");
-          })
-        : [selected];
-
-      const jobs = areas.flatMap(area => {
-        return [
-          "공연장",
-          "라이브홀",
-          "콘서트홀",
-          "소극장"
-        ].map(term => area + " " + term);
-      });
-
-      let done = 0;
-      let failures = 0;
-
-      get("discover").disabled = true;
-      get("stopScan").hidden = false;
-
-      get("scanStatus").textContent =
-        "지역별 공연장을 탐색하고 있어요.";
-
-      await runPool(
-        jobs,
-        async keyword => {
-          try {
-            const places = await keywordPages(
-              keyword,
-              () => id === scanId
+        Array.from(get("district").options).forEach(option => {
+          option.hidden =
+            option.value !== "all" &&
+            region !== "all" &&
+            (
+              region === "goyang"
+                ? !option.value.startsWith("고양")
+                : !option.value.startsWith("서울")
             );
+        });
 
-            if (id !== scanId) return;
+        showVenues();
+      };
+    });
 
-            places
-              .filter(isVenue)
-              .forEach(remember);
-          } catch (error) {
-            failures++;
-          }
+    get("discover").onclick = discover;
 
-          if (id !== scanId) return;
-
-          done++;
-          refreshInventory();
-
-          get("scanStatus").textContent =
-            "지역 탐색 " + done + "/" + jobs.length +
-            " · 누적 " + inventory.size + "곳";
-        },
-        () => id === scanId
-      );
-
-      if (id !== scanId) return;
+    get("stopScan").onclick = () => {
+      ++scanId;
 
       get("discover").disabled = false;
       get("stopScan").hidden = true;
 
       get("scanStatus").textContent =
-        "탐색 완료 · 누적 " + inventory.size + "곳" +
-        (
-          failures
-            ? " · 실패 " + failures + "건, 다시 탐색 가능"
-            : ""
-        ) +
-        " · 검색 제공 범위 기준";
-    }
+        "탐색을 중지했어요. 확인한 공연장은 유지됩니다.";
+    };
 
-    // 현재 위치를 파란 점으로 표시한다.
-    function locateUser() {
-      if (!navigator.geolocation) {
-        message(
-          "이 브라우저는 위치 확인을 지원하지 않아요."
+    locateUser();
+
+    let checked = 0;
+    let failed = 0;
+
+    // 기본 목록에도 동일한 엄격한 검사를 적용한다.
+    await runPool(venueNames, async name => {
+      try {
+        const result = await query(
+          "keywordSearch",
+          name,
+          { size: 15 }
         );
-        return;
+
+        result.data
+          .filter(isVenue)
+          .forEach(remember);
+      } catch (error) {
+        failed++;
       }
 
-      const token = generation;
-      const request = ++locationRequest;
-
-      message(
-        "위치 권한을 허용하면 현재 위치를 표시해요."
-      );
-
-      navigator.geolocation.getCurrentPosition(
-        position => {
-          if (request !== locationRequest) return;
-
-          const center = new kakao.maps.LatLng(
-            position.coords.latitude,
-            position.coords.longitude
-          );
-
-          if (userMarker) userMarker.setMap(null);
-
-          const dot = document.createElement("div");
-
-          dot.className = "location-dot";
-          dot.title = "현재 위치";
-
-          userMarker = new kakao.maps.CustomOverlay({
-            map: map,
-            position: center,
-            content: dot,
-            zIndex: 30
-          });
-
-          // 위치를 기다리는 동안 공연장을 선택했다면 이동하지 않는다.
-          if (token === generation) {
-            map.setLevel(5);
-            map.setCenter(center);
-
-            message(
-              "현재 위치를 표시했어요. " +
-              "공연장을 선택해 주변을 탐색해 보세요."
-            );
-          }
-        },
-        () => {
-          if (token === generation) {
-            message(
-              "현재 위치를 확인하지 못했어요. " +
-              "공연장 검색은 그대로 이용할 수 있어요."
-            );
-          }
-        },
-        {
-          timeout: 10000,
-          maximumAge: 0,
-          enableHighAccuracy: true
-        }
-      );
-    }
-
-    // 지도와 화면의 버튼을 준비한다.
-    async function initialize() {
-      map = new kakao.maps.Map(get("map"), {
-        center: new kakao.maps.LatLng(37.5509, 126.9217),
-        level: 5
-      });
-
-      [
-        "searchButton",
-        "locate",
-        "reset",
-        "discover"
-      ].forEach(id => {
-        get(id).disabled = false;
-      });
-
-      // 자주 찾는 공연장 바로가기
-      const shortcuts = venueNames
-        .slice(0, 4)
-        .concat([
-          "고양아람누리",
-          "고양어울림누리"
-        ]);
-
-      shortcuts.forEach(name => {
-        const button = document.createElement("button");
-
-        button.className = "chip";
-        button.textContent = name;
-
-        button.onclick = () => {
-          const place = knownVenues.find(item => {
-            return item.preset === name;
-          });
-
-          if (place) {
-            selectVenue(place);
-          } else {
-            get("keyword").value = name;
-            searchVenues(name);
-          }
-        };
-
-        get("presets").append(button);
-      });
-
-      get("searchForm").onsubmit = event => {
-        event.preventDefault();
-
-        const keyword = get("keyword").value.trim();
-
-        if (keyword) searchVenues(keyword);
-      };
-
-      get("locate").onclick = locateUser;
-      get("reset").onclick = showVenues;
-
-      // 주변 장소 필터
-      document.querySelectorAll("[data-type]").forEach(button => {
-        button.onclick = () => {
-          filter = button.dataset.type;
-
-          document.querySelectorAll("[data-type]").forEach(item => {
-            item.setAttribute(
-              "aria-pressed",
-              String(item === button)
-            );
-          });
-
-          if (popup) popup.setMap(null);
-
-          renderList();
-        };
-      });
-
-      // 지도 크기가 달라지면 다시 배치한다.
-      const observer = new ResizeObserver(() => {
-        const center = map.getCenter();
-
-        map.relayout();
-        map.setCenter(center);
-      });
-
-      observer.observe(get("map"));
-
-      // 구별 선택 메뉴
-      districts.forEach(area => {
-        const option = document.createElement("option");
-
-        option.value = area;
-        option.textContent = area;
-
-        get("district").append(option);
-      });
-
-      // 서울·고양 지역 탭
-      document.querySelectorAll("[data-region]").forEach(button => {
-        button.onclick = () => {
-          region = button.dataset.region;
-
-          document.querySelectorAll("[data-region]").forEach(item => {
-            item.setAttribute(
-              "aria-pressed",
-              String(item === button)
-            );
-          });
-
-          get("district").value = "all";
-
-          Array.from(get("district").options).forEach(option => {
-            option.hidden =
-              option.value !== "all" &&
-              region !== "all" &&
-              (
-                region === "goyang"
-                  ? !option.value.startsWith("고양")
-                  : !option.value.startsWith("서울")
-              );
-          });
-
-          showVenues();
-        };
-      });
-
-      get("discover").onclick = discover;
-
-      get("stopScan").onclick = () => {
-        ++scanId;
-
-        get("discover").disabled = false;
-        get("stopScan").hidden = true;
-
-        get("scanStatus").textContent =
-          "탐색을 중지했어요. 찾은 장소는 유지됩니다.";
-      };
-
-      // 지도가 준비되면 현재 위치를 요청한다.
-      locateUser();
-
-      let checked = 0;
-      let failed = 0;
-
-      // 기본 후보를 조회하면서 발견한 공연장을 순차적으로 표시한다.
-      await runPool(venueNames, async name => {
-        try {
-          const result = await query(
-            "keywordSearch",
-            name,
-            { size: 15 }
-          );
-
-          result.data
-            .filter(place => {
-              const target = normalize(name).replace(/^고양/, "");
-              const actual = normalize(place.place_name);
-
-              const related =
-                actual.length >= 3 &&
-                (
-                  actual.includes(target) ||
-                  target.includes(actual)
-                );
-
-              const excluded =
-                /주차장|출입구|편의점|카페|음식점|영화관/.test(
-                  place.category_name || ""
-                );
-
-              return (
-                supported(place) &&
-                !excluded &&
-                (related || isVenue(place))
-              );
-            })
-            .forEach(place => {
-              remember({
-                ...place,
-                preset: name
-              });
-            });
-        } catch (error) {
-          failed++;
-        }
-
-        checked++;
-        refreshInventory();
-
-        get("seedStatus").textContent =
-          "기본 후보 " + checked + "/" + venueNames.length +
-          "개 조회 · " + inventory.size + "곳 발견" +
-          (
-            failed
-              ? " · 조회 실패 " + failed + "건"
-              : ""
-          );
-      });
+      checked++;
+      refreshInventory();
 
       get("seedStatus").textContent =
-        "기본 후보 " + venueNames.length +
-        "개 조회 완료 · 지역 탐색으로 더 찾아보세요." +
+        "후보 " + checked + "/" + venueNames.length +
+        "개 조회 · 공연장 " + inventory.size + "곳 확인" +
         (
           failed
-            ? " (실패 " + failed + "건은 이름 검색으로 재시도)"
+            ? " · 조회 실패 " + failed + "건"
             : ""
         );
-    }
+    });
 
-    // SDK가 준비된 이후에만 지도 코드를 실행한다.
-    const timer = setTimeout(() => {
-      message(
-        "지도 로딩이 지연되고 있어요. " +
-        "JavaScript 키, 등록 도메인과 연결 상태를 확인해 주세요."
+    get("seedStatus").textContent =
+      "기본 검색 완료 · 공연장 분류가 확인된 장소만 포함했습니다." +
+      (
+        failed
+          ? " 실패 " + failed + "건은 이름 검색으로 재시도해 주세요."
+          : ""
       );
-    }, 15000);
+  }
 
-    const script = document.createElement("script");
+  // SDK 로딩이 완료된 후에만 지도를 생성한다.
+  const timer = setTimeout(() => {
+    message(
+      "지도 로딩이 지연되고 있어요. " +
+      "JavaScript 키, 등록 도메인과 연결 상태를 확인해 주세요."
+    );
+  }, 15000);
 
-    script.src =
-      "https://dapi.kakao.com/v2/maps/sdk.js" +
-      "?appkey=827280b33d4bbb9a008d5d22e53ab631" +
-      "&libraries=services&autoload=false";
+  const script = document.createElement("script");
 
-    script.onerror = () => {
+  script.src =
+    "https://dapi.kakao.com/v2/maps/sdk.js" +
+    "?appkey=827280b33d4bbb9a008d5d22e53ab631" +
+    "&libraries=services&autoload=false";
+
+  script.onerror = () => {
+    clearTimeout(timer);
+
+    message(
+      "지도를 불러오지 못했어요. " +
+      "카카오 키와 등록 도메인을 확인해 주세요."
+    );
+  };
+
+  script.onload = () => {
+    if (!window.kakao?.maps) {
       clearTimeout(timer);
 
       message(
-        "지도를 불러오지 못했어요. " +
-        "카카오 키와 등록 도메인을 확인해 주세요."
+        "지도 SDK를 사용할 수 없어요. " +
+        "키와 도메인 설정을 확인해 주세요."
       );
-    };
 
-    script.onload = () => {
-      if (!window.kakao?.maps) {
-        clearTimeout(timer);
+      return;
+    }
 
+    kakao.maps.load(() => {
+      clearTimeout(timer);
+
+      initialize().catch(() => {
         message(
-          "지도 SDK를 사용할 수 없어요. " +
-          "키와 도메인 설정을 확인해 주세요."
+          "지도 초기화에 실패했어요. " +
+          "새로고침 후 다시 시도해 주세요."
         );
-
-        return;
-      }
-
-      kakao.maps.load(() => {
-        clearTimeout(timer);
-
-        initialize().catch(() => {
-          message(
-            "지도 초기화에 실패했어요. " +
-            "새로고침 후 다시 시도해 주세요."
-          );
-        });
       });
-    };
+    });
+  };
 
-    document.head.append(script);
-  </script>
-</body>
-</html>
+  document.head.append(script);
+</script>
